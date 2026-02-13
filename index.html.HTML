@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tütü Etek & Body Sipariş Formu</title>
+    <style>
+        /* --- TEMEL CSS AYARLARI --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        
+        /* HEADER */
+        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { font-size: 1.8em; margin-bottom: 10px; }
+        
+        /* PROGRESS BAR */
+        .progress-bar { display: flex; justify-content: space-between; padding: 15px 10px; background: #f8f9fa; overflow-x: auto; }
+        .progress-step { flex: 1; text-align: center; padding: 5px; position: relative; min-width: 50px; }
+        .progress-step::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 3px; background: #e0e0e0; z-index: 1; }
+        .progress-step:first-child::before { left: 50%; }
+        .progress-step:last-child::before { right: 50%; }
+        .progress-step.active::before, .progress-step.completed::before { background: #f5576c; }
+        .progress-circle { width: 30px; height: 30px; border-radius: 50%; background: #e0e0e0; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; font-weight: bold; position: relative; z-index: 2; color: #666; font-size: 0.8em;}
+        .progress-step.active .progress-circle { background: #f5576c; color: white; transform: scale(1.1); transition: 0.3s; box-shadow: 0 0 10px rgba(245, 87, 108, 0.5); }
+        .progress-step.completed .progress-circle { background: #00b894; color: white; }
+        .progress-label { font-size: 0.65em; color: #666; font-weight: 600; }
+        
+        /* FORM İÇERİK */
+        .form-content { padding: 30px; }
+        .form-step { display: none; }
+        .form-step.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* INPUTLAR */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: all 0.3s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #f5576c; }
+        
+        /* GRİD SİSTEMİ */
+        .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .color-option, .crown-option-card, .body-option-card { padding: 8px; border: 3px solid #e0e0e0; border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; position: relative; background: white; }
+        .color-option.selected, .crown-option-card.selected, .body-option-card.selected { border-color: #f5576c; background: #fff5f7; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(245, 87, 108, 0.2); }
+        .color-option input, .crown-option-card input, .body-option-card input { display: none; }
+        
+        .tutu-image, .crown-image, .body-image { width: 100%; height: 90px; object-fit: cover; border-radius: 8px; margin-bottom: 5px; }
+        .body-image { object-fit: contain; background: #f1f1f1; } 
+
+        /* BÜYÜTEÇ BUTONU */
+        .zoom-btn { position: absolute; top: 5px; right: 5px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 5; font-size: 14px; }
+        .zoom-btn:hover { background: #f5576c; color: white; }
+
+        /* ÖZET */
+        .summary-card { background: #f8f9fa; padding: 20px; border-radius: 12px; }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-size: 0.95em; }
+        .summary-row:last-child { border-bottom: none; }
+        
+        /* BUTONLAR */
+        .button-group { display: flex; gap: 10px; margin-top: 25px; }
+        button { flex: 1; padding: 15px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; }
+        .btn-primary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .btn-secondary { background: #e0e0e0; color: #555; }
+        .btn-success { background: #00b894; color: white; }
+        .whatsapp-btn { background: #25D366; color: white; text-decoration: none; padding: 15px; border-radius: 8px; display: block; text-align: center; margin-top: 15px; font-weight: 600; }
+        
+        /* FİLTRE BUTONLARI */
+        .filter-tags { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
+        .filter-tag { padding: 5px 12px; background: #eee; border-radius: 20px; font-size: 0.8em; white-space: nowrap; cursor: pointer; border: 1px solid transparent; }
+        .filter-tag.active { background: #6c5ce7; color: white; }
+
+        /* ÇOCUK LİSTESİ TASARIMI */
+        .child-entry { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            margin-bottom: 12px; 
+            background: #f8f9fa; 
+            padding: 12px; 
+            border-radius: 10px; 
+            border: 1px solid #eee;
+        }
+        .child-no { font-weight: bold; color: #f5576c; min-width: 25px; font-size: 1.1em; }
+        .c-name { flex: 2; border: 2px solid #ddd; }
+        .c-age { flex: 1; max-width: 120px; border: 2px solid #ddd; }
+        
+        .error-message { background: #ffe0e0; color: #d63031; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #d63031; display: none; }
+        .required { color: #d63031; }
+        
+        /* MODAL */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        .modal-content { background-color: #fefefe; margin: 5% auto; padding: 25px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 15px; position: relative; animation: slideDown 0.3s; max-height: 90vh; overflow-y: auto;}
+        .image-modal-content { background: transparent; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; width: 100%; max-width: 100%; }
+        .image-modal-content img { max-width: 95%; max-height: 90vh; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .close-modal { position: absolute; top: 15px; right: 20px; color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 1010; }
+        .close-image-modal { position: absolute; top: 20px; right: 20px; color: white; font-size: 35px; cursor: pointer; z-index: 1010; background: rgba(0,0,0,0.5); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        @keyframes slideDown { from {top: -50px; opacity: 0;} to {top: 5%; opacity: 1;} }
+        @media (max-width: 600px) { .color-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .size-chart-wrapper { text-align: right; margin-top: -15px; margin-bottom: 20px; padding-right: 5px; }
+        .size-chart-btn { background: #6c5ce7; color: white; padding: 6px 15px; border-radius: 8px; font-size: 0.8em; border: none; cursor: pointer; display: inline-block; font-weight: 600; box-shadow: 0 4px 6px rgba(108, 92, 231, 0.2); transition: all 0.2s; }
+        .size-chart-btn:hover { background: #5b4cc4; transform: translateY(-2px); }
+        .size-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        .size-table th, .size-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .size-table th { background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎀 Tütü & Tasarım Siparişi</h1>
+            <p>23 Nisan Özel - Hızlı Sipariş</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-step active" id="p1"><div class="progress-circle">1</div><div class="progress-label">Ürün</div></div>
+            <div class="progress-step" id="p2"><div class="progress-circle">2</div><div class="progress-label">Liste</div></div>
+            <div class="progress-step" id="p3"><div class="progress-circle">3</div><div class="progress-label">Tütü/Taç</div></div>
+            <div class="progress-step" id="p4"><div class="progress-circle">4</div><div class="progress-label">Tasarım</div></div>
+            <div class="progress-step" id="p5"><div class="progress-circle">5</div><div class="progress-label">Bilgi</div></div>
+            <div class="progress-step" id="p6"><div class="progress-circle">6</div><div class="progress-label">Özet</div></div>
+        </div>
+
+        <div id="sizeModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" onclick="toggleModal('sizeModal', false)">&times;</span>
+                <h2 style="color: #6c5ce7;">📏 Beden Tablosu</h2>
+                <div style="background:#fff3cd; padding:10px; margin:10px 0; border-radius:8px; font-size:0.9em; line-height: 1.4;">
+                    ⚠️ <b>Önemli Not:</b> Bodylerimiz LC Waikiki mağazasından temin edilmektedir. Sipariş verirken lütfen LCW kalıplarını baz alınız.
+                </div>
+                <table class="size-table">
+                    <tr><th>Yaş</th><th>Etek Boyu</th></tr>
+                    <tr><td>3-4 Yaş</td><td>28 cm</td></tr>
+                    <tr><td>4-5 Yaş</td><td>31 cm</td></tr>
+                    <tr><td>5-6 Yaş</td><td>33 cm</td></tr>
+                    <tr><td>6-7 Yaş</td><td>35 cm</td></tr>
+                    <tr><td>7-8 Yaş</td><td>37 cm</td></tr>
+                    <tr><td>8-9 Yaş</td><td>39 cm</td></tr>
+                    <tr><td>9-10 Yaş</td><td>41 cm</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div id="imageModal" class="modal" onclick="toggleModal('imageModal', false)">
+            <span class="close-image-modal">&times;</span>
+            <div class="image-modal-content">
+                <img id="modalBigImage" src="">
+            </div>
+        </div>
+
+        <div class="form-content">
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="form-step active" id="step1">
+                <div class="form-group">
+                    <label>Ürün Tipi <span class="required">*</span></label>
+                    <select id="productType">
+                        <option value="">Seçiniz...</option>
+                        <option value="Takım (Tütü+Body+Taç)">Takım (Tütü + Body + Taç)</option>
+                        <option value="Sadece Body">Sadece Body (Baskılı)</option>
+                        <option value="Sadece Tütü">Sadece Tütü Etek</option>
+                        <option value="Tütü + Taç">Tütü Etek + Taç</option>
+                        <option value="Sadece Taç">Sadece Taç</option>
+                    </select>
+                </div>
+                
+                <div class="size-chart-wrapper">
+                    <button type="button" class="size-chart-btn" onclick="toggleModal('sizeModal', true)">📏 Beden Tablosu</button>
+                </div>
+                
+                <div class="form-group" id="ageGroupField">
+                    <label>Yaş Grubu</label>
+                    <select id="ageGroup">
+                        <option value="">Seçiniz...</option>
+                        <option value="3-4">3-4 Yaş</option><option value="4-5">4-5 Yaş</option><option value="5-6">5-6 Yaş</option>
+                        <option value="6-7">6-7 Yaş</option><option value="7-8">7-8 Yaş</option><option value="8-9">8-9 Yaş</option>
+                        <option value="9-10">9-10 Yaş</option><option value="10-11">10-11 Yaş</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Toplam Adet <span class="required">*</span></label>
+                    <input type="number" id="quantity" min="1" value="1">
+                </div>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="handleStep1Next()">İleri →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step2">
+                <h2>Çocuk Listesi</h2>
+                <p style="font-size:0.9em; color:#666; margin-bottom:15px;">Lütfen adet kadar çocuğun isim ve beden bilgisini giriniz.</p>
+                <div id="childrenList"></div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="goToStep(1)">← Geri</button>
+                    <button class="btn-primary" onclick="handleStep2Next()">İleri →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step3">
+                <div id="skirtSelectionArea">
+                    <label>Etek Rengi <span class="required">*</span></label>
+                    <div class="color-grid" id="skirtGrid"></div>
+                </div>
+                <div id="crownSelectionArea" style="margin-top: 30px; display:none;">
+                    <label>Taç Modeli <span class="required">*</span></label>
+                    <div class="color-grid" id="crownOptionsContainer"></div>
+                </div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="handleBackToStepFrom3()">← Geri</button>
+                    <button class="btn-primary" onclick="handleStep3Next()">İleri →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step4">
+                <h2>Body Tasarımı Seçimi</h2>
+                <div id="bodyFilterContainer" class="filter-tags" style="display:none;"></div>
+                <div class="color-grid" id="bodyGrid"></div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="handleBackToStep3()">← Geri</button>
+                    <button class="btn-primary" onclick="handleStep4Next()">İleri →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step5">
+                <div class="form-group"><label>Ad Soyad <span class="required">*</span></label><input type="text" id="customerName"></div>
+                <div class="form-group"><label>Telefon <span class="required">*</span></label><input type="tel" id="phone" placeholder="0555..."></div>
+                <div class="form-group"><label>Okul / Sınıf</label><input type="text" id="school"></div>
+                <div class="form-group"><label>Adres <span class="required">*</span></label><textarea id="address" rows="3"></textarea></div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="handleBackToStep4()">← Geri</button>
+                    <button class="btn-primary" onclick="handleStep5Next()">Özeti Gör →</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step6">
+                <div class="summary-card" id="orderSummary"></div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="goToStep(5)">← Düzenle</button>
+                    <button class="btn-success" id="submitBtn" onclick="submitOrder()">✓ Siparişi Onayla</button>
+                </div>
+            </div>
+
+            <div class="form-step" id="step7">
+                <div style="text-align: center; padding: 20px;">
+                    <h2 style="color: #00b894;">Siparişiniz Alındı!</h2>
+                    <p id="orderNoText" style="margin: 10px 0; font-weight: bold;"></p>
+                    <a href="#" class="whatsapp-btn" id="whatsappBtn" target="_blank">📱 WhatsApp'tan Paylaş</a>
+                    <button class="btn-primary" style="margin-top:20px;" onclick="location.reload()">Yeni Sipariş</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7tpbjotkF3sBD9y1h6ofniKhjELITYNJYX3ta84nmAMsXqj9GBFDdHcrGwjBmJto5_Q/exec';
+
+        // GÖRSEL VERİLERİ
+        const skirtImages = {
+            "Pembe": "https://i.imgur.com/EAykhMr.jpeg", "Pudra Pembe": "https://i.imgur.com/Hh1KUZm.jpeg",
+            "Pembe Lila Yeşil": "https://i.imgur.com/YVGR3iU.jpeg", "Lila": "https://i.imgur.com/EDvJW9c.jpeg",
+            "Kırmızı": "https://i.imgur.com/Xz7WvWA.jpeg", "Rengarenk": "https://i.imgur.com/J4OsGkd.jpeg",
+            "Beyaz": "https://i.imgur.com/KKwQcOD.jpeg", "Siyah": "https://i.imgur.com/yu5uQLl.jpeg",
+            "Sarı": "https://i.imgur.com/SaqCejT.jpeg", "Turuncu": "https://i.imgur.com/LidAAJF.jpeg",
+            "Bebe Mavisi": "https://i.imgur.com/gptQLtr.jpeg", "Koyu Mavi": "https://i.imgur.com/wBdXPqP.jpeg"
+        };
+
+        const bodyDesigns = {
+            "Bebe Mavisi": ["https://i.imgur.com/iBH6xsf.jpeg", "https://i.imgur.com/HGsFHKl.jpeg"],
+            "Beyaz": ["https://i.imgur.com/0WWd3wM.jpeg"],
+            "Kırmızı": ["https://i.imgur.com/J0UzMPp.jpeg", "https://i.imgur.com/F8431xF.jpeg", "https://i.imgur.com/Bpbi7I1.jpeg"],
+            "Koyu Mavi": ["https://i.imgur.com/U6Ehy9S.jpeg", "https://i.imgur.com/iFdFp4Q.jpeg"],
+            "Lila": ["https://i.imgur.com/mcrnMzR.jpeg", "https://i.imgur.com/KvmB92Z.jpeg"],
+            "Pembe": ["https://i.imgur.com/xo4nbFJ.jpeg", "https://i.imgur.com/8dSl5ED.jpeg", "https://i.imgur.com/mgFWv9o.jpeg"],
+            "Pembe Lila Yeşil": ["https://i.imgur.com/5s7Ovp7.jpeg"],
+            "Pudra Pembe": ["https://i.imgur.com/2G1tmqA.jpeg", "https://i.imgur.com/CiOLhnS.jpeg", "https://i.imgur.com/9Fw86WQ.jpeg", "https://i.imgur.com/7R1ezte.jpeg"],
+            "Rengarenk": ["https://i.imgur.com/IhOwnDN.jpeg", "https://i.imgur.com/W7e6qeJ.jpeg", "https://i.imgur.com/U13E4uR.jpeg", "https://i.imgur.com/PnYeTYN.jpeg", "https://i.imgur.com/N3ALDNv.jpeg", "https://i.imgur.com/y2CTMES.jpeg", "https://i.imgur.com/RAI8lGO.jpeg"],
+            "Sarı": ["https://i.imgur.com/rPBOBYl.jpeg", "https://i.imgur.com/kosYNGu.jpeg", "https://i.imgur.com/GiI439l.jpeg"],
+            "Siyah": ["https://i.imgur.com/Axw5Hvb.jpeg"],
+            "Turuncu": ["https://i.imgur.com/K5XONfr.jpeg", "https://i.imgur.com/tPKma3I.jpeg", "https://i.imgur.com/PBMi45L.jpeg"]
+        };
+
+        const crownImages = {
+            "Bebe Mavisi Çiçekli Taç": "https://i.imgur.com/OP277EA.jpeg", "Pembe Lila Yeşil Çiçekli Taç": "https://i.imgur.com/GkEXczQ.jpeg",
+            "Beyaz Çiçekli Taç": "https://i.imgur.com/IbZzeCB.jpeg", "Siyah Çiçekli Taç": "https://i.imgur.com/C792uG2.jpeg",
+            "Kırmızı Çiçekli Taç": "https://i.imgur.com/KQkthXI.jpeg", "Lila Çiçekli Taç": "https://i.imgur.com/CiLlDqO.jpeg",
+            "Rengarenk Çiçekli Taç": "https://i.imgur.com/DHrpvR2.jpeg", "Pudra Pembe Çiçekli Taç": "https://i.imgur.com/RmMID5h.jpeg",
+            "Lila Kelebekli Taç": "https://i.imgur.com/lSwUj8x.jpeg", "Pembe Kelebekli Taç": "https://i.imgur.com/IOxPI1b.jpeg",
+            "Pudra Pembe Kelebekli Taç": "https://i.imgur.com/2MPdhWM.jpeg", "Rengarenk Kelebekli Taç": "https://i.imgur.com/2HNQr90.jpeg"
+        };
+
+        const crownRules = {
+            "Pembe": ["Pembe Kelebekli Taç"],
+            "Pudra Pembe": ["Pudra Pembe Çiçekli Taç", "Pudra Pembe Kelebekli Taç"],
+            "Pembe Lila Yeşil": ["Pembe Lila Yeşil Çiçekli Taç"],
+            "Lila": ["Lila Çiçekli Taç", "Lila Kelebekli Taç"],
+            "Kırmızı": ["Kırmızı Çiçekli Taç"],
+            "Rengarenk": ["Rengarenk Çiçekli Taç", "Rengarenk Kelebekli Taç"],
+            "Beyaz": ["Beyaz Çiçekli Taç"], "Siyah": ["Siyah Çiçekli Taç"], "Bebe Mavisi": ["Bebe Mavisi Çiçekli Taç"]
+        };
+
+        // YARDIMCI FONKSİYONLAR
+        function toggleModal(modalId, show) { document.getElementById(modalId).style.display = show ? 'block' : 'none'; }
+        function openBigImage(url) { document.getElementById('modalBigImage').src = url; toggleModal('imageModal', true); }
+
+        function updateFieldsVisibility() {
+            const type = document.getElementById('productType').value;
+            const ageField = document.getElementById('ageGroupField');
+            if (type === 'Sadece Taç' || type === 'Sadece Body') ageField.style.display = 'none';
+            else ageField.style.display = 'block';
+        }
+
+        function generateChildList(qty) {
+            const container = document.getElementById('childrenList');
+            container.innerHTML = "";
+            for(let i=1; i<=qty; i++) {
+                container.innerHTML += `<div class="child-entry"><span class="child-no">${i}.</span><input type="text" placeholder="Çocuk Adı" class="c-name"><select class="c-age"><option value="3-4">3-4 Yaş</option><option value="4-5">4-5 Yaş</option><option value="5-6">5-6 Yaş</option><option value="6-7">6-7 Yaş</option><option value="7-8">7-8 Yaş</option><option value="8-9">8-9 Yaş</option><option value="9-10">9-10 Yaş</option><option value="10-11">10-11 Yaş</option></select></div>`;
+            }
+        }
+
+        function renderSkirts() {
+            const grid = document.getElementById('skirtGrid');
+            grid.innerHTML = "";
+            for (const [name, imgUrl] of Object.entries(skirtImages)) {
+                grid.innerHTML += `<div class="color-option" onclick="selectSkirt('${name}', this)"><div class="zoom-btn" onclick="event.stopPropagation(); openBigImage('${imgUrl}')">🔍</div><input type="radio" name="color" value="${name}"><img src="${imgUrl}" class="tutu-image"><div style="font-size:0.85em;">${name}</div></div>`;
+            }
+        }
+
+        function renderBodyOptions(filterColor = null) {
+            const grid = document.getElementById('bodyGrid');
+            const filterContainer = document.getElementById('bodyFilterContainer');
+            grid.innerHTML = "";
+            if (filterColor) {
+                filterContainer.style.display = 'none';
+                const options = bodyDesigns[filterColor];
+                if (options) options.forEach((url, index) => createBodyCard(grid, filterColor + " Tasarım " + (index+1), url));
+                else grid.innerHTML = "<p>Bu renk için özel body tasarımı bulunamadı.</p>";
+            } else {
+                filterContainer.style.display = 'flex';
+                filterContainer.innerHTML = `<div class="filter-tag active" onclick="filterBodyGrid('Tümü', this)">Tümü</div>`;
+                Object.keys(bodyDesigns).forEach(key => filterContainer.innerHTML += `<div class="filter-tag" onclick="filterBodyGrid('${key}', this)">${key}</div>`);
+                Object.entries(bodyDesigns).forEach(([cat, urls]) => urls.forEach((url, idx) => createBodyCard(grid, cat + " " + (idx+1), url, cat)));
+            }
+        }
+
+        function createBodyCard(container, name, url, category="") {
+            container.innerHTML += `<div class="body-option-card" data-category="${category}" onclick="selectBody('${name}', this)"><div class="zoom-btn" onclick="event.stopPropagation(); openBigImage('${url}')">🔍</div><input type="radio" name="bodyDesign" value="${name}"><img src="${url}" class="body-image"><div style="font-size:0.75em; font-weight:bold;">${name}</div></div>`;
+        }
+
+        function filterBodyGrid(category, btn) {
+            document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.body-option-card').forEach(card => card.style.display = (category === 'Tümü' || card.dataset.category === category) ? 'block' : 'none');
+        }
+
+        function selectSkirt(val, el) {
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected'); el.querySelector('input').checked = true;
+            updateCrownOptions(val);
+        }
+        function selectBody(val, el) {
+            document.querySelectorAll('.body-option-card').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected'); el.querySelector('input').checked = true;
+        }
+        function selectCrown(val, el) {
+            document.querySelectorAll('.crown-option-card').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected'); el.querySelector('input').checked = true;
+        }
+
+        function updateCrownOptions(skirtColor) {
+            const type = document.getElementById('productType').value;
+            const container = document.getElementById('crownOptionsContainer');
+            const area = document.getElementById('crownSelectionArea');
+            if (!type.includes('Taç')) { area.style.display = 'none'; return; }
+            if (['Sarı', 'Turuncu', 'Koyu Mavi'].includes(skirtColor)) { area.style.display = 'none'; return; }
+            area.style.display = 'grid'; container.innerHTML = '';
+            (crownRules[skirtColor] || []).forEach(crown => {
+                container.innerHTML += `<div class="crown-option-card" onclick="selectCrown('${crown}', this)"><div class="zoom-btn" onclick="event.stopPropagation(); openBigImage('${crownImages[crown]}')">🔍</div><input type="radio" name="crownModel" value="${crown}"><img src="${crownImages[crown]}" class="crown-image"><div style="font-size:0.7em; font-weight:bold;">${crown}</div></div>`;
+            });
+        }
+
+        // ADIM YÖNETİMİ
+        function goToStep(step) {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+            document.querySelectorAll('.progress-step').forEach((s, idx) => {
+                s.classList.remove('active', 'completed');
+                if (idx + 1 < step) s.classList.add('completed');
+                if (idx + 1 === step) s.classList.add('active');
+            });
+            if(step === 6) prepareSummary();
+        }
+
+        function handleStep1Next() {
+            const type = document.getElementById('productType').value;
+            const qty = parseInt(document.getElementById('quantity').value);
+            const error = document.getElementById('errorMessage');
+            if (!type) { error.textContent = "Lütfen ürün seçiniz."; error.style.display = 'block'; return; }
+            if (!qty || qty < 1) { error.textContent = "Lütfen geçerli adet giriniz."; error.style.display = 'block'; return; }
+            if (type === 'Takım (Tütü+Body+Taç)' || type === 'Sadece Body') { generateChildList(qty); goToStep(2); } 
+            else if (type === 'Sadece Tütü' || type === 'Tütü + Taç') { renderSkirts(); document.getElementById('skirtSelectionArea').style.display = 'block'; document.getElementById('crownSelectionArea').style.display = 'none'; goToStep(3); } 
+            else if (type === 'Sadece Taç') {
+                document.getElementById('skirtSelectionArea').style.display = 'none'; document.getElementById('crownSelectionArea').style.display = 'grid';
+                const container = document.getElementById('crownOptionsContainer'); container.innerHTML = '';
+                Object.keys(crownImages).forEach(c => container.innerHTML += `<div class="crown-option-card" onclick="selectCrown('${c}', this)"><input type="radio" name="crownModel" value="${c}"><img src="${crownImages[c]}" class="crown-image"><div style="font-size:0.7em;">${c}</div></div>`);
+                goToStep(3);
+            }
+        }
+
+        function handleStep2Next() {
+            const inputs = document.querySelectorAll('.c-name');
+            const error = document.getElementById('errorMessage');
+            let allFilled = true;
+            inputs.forEach(input => { if(input.value.trim() === "") allFilled = false; });
+            if (!allFilled) { error.textContent = "Lütfen listedeki tüm çocukların isimlerini giriniz."; error.style.display = 'block'; return; }
+            const type = document.getElementById('productType').value;
+            if (type === 'Sadece Body') { renderBodyOptions(null); goToStep(4); } else { renderSkirts(); goToStep(3); }
+        }
+
+        function handleBackToStepFrom3() {
+            const type = document.getElementById('productType').value;
+            if (type === 'Sadece Tütü' || type === 'Tütü + Taç' || type === 'Sadece Taç') goToStep(1); else goToStep(2);
+        }
+
+        function handleStep3Next() {
+            const type = document.getElementById('productType').value;
+            const error = document.getElementById('errorMessage');
+            if (type !== 'Sadece Taç' && !document.querySelector('input[name="color"]:checked')) { error.textContent = "Lütfen bir renk seçiniz!"; error.style.display = 'block'; return; }
+            if (type.includes('Taç')) {
+                const skirtColor = document.querySelector('input[name="color"]:checked')?.value;
+                const noCrown = ['Sarı', 'Turuncu', 'Koyu Mavi'].includes(skirtColor);
+                if (!noCrown && !document.querySelector('input[name="crownModel"]:checked') && type !== 'Sadece Taç') { error.textContent = "Lütfen taç modeli seçiniz!"; error.style.display = 'block'; return; }
+            }
+            if (type === 'Takım (Tütü+Body+Taç)') { const selectedColor = document.querySelector('input[name="color"]:checked').value; renderBodyOptions(selectedColor); goToStep(4); } 
+            else goToStep(5);
+        }
+
+        function handleStep4Next() {
+            if (!document.querySelector('input[name="bodyDesign"]:checked')) { document.getElementById('errorMessage').textContent = "Lütfen bir body tasarımı seçiniz!"; document.getElementById('errorMessage').style.display = 'block'; return; }
+            goToStep(5);
+        }
+
+        function handleStep5Next() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const error = document.getElementById('errorMessage');
+
+            if (!name || !phone || !address) {
+                error.textContent = "Lütfen Ad Soyad, Telefon ve Adres alanlarını doldurunuz.";
+                error.style.display = 'block';
+                window.scrollTo(0, 0);
+                return;
+            }
+            goToStep(6);
+        }
+
+        function handleBackToStep3() { const type = document.getElementById('productType').value; if (type === 'Sadece Body') goToStep(2); else goToStep(3); }
+        function handleBackToStep4() { const type = document.getElementById('productType').value; if (type.includes('Body')) goToStep(4); else goToStep(3); }
+
+        function prepareSummary() {
+            const summaryDiv = document.getElementById('orderSummary');
+            const type = document.getElementById('productType').value;
+            const color = document.querySelector('input[name="color"]:checked')?.value || '-';
+            const crown = document.querySelector('input[name="crownModel"]:checked')?.value || '-';
+            const body = document.querySelector('input[name="bodyDesign"]:checked')?.value || '-';
+            const qty = document.getElementById('quantity').value;
+            
+            let html = `<h3>Sipariş Özeti</h3><hr style="margin:10px 0;">`;
+            html += `<div class="summary-row"><span>Müşteri:</span><span>${document.getElementById('customerName').value}</span></div>`;
+            html += `<div class="summary-row"><span>Ürün:</span><span>${type}</span></div>`;
+            if (type !== 'Sadece Taç' && type !== 'Sadece Body') html += `<div class="summary-row"><span>Etek Rengi:</span><span>${color}</span></div>`;
+            if (type.includes('Taç') || type === 'Sadece Taç') html += `<div class="summary-row"><span>Taç:</span><span>${crown}</span></div>`;
+            if (type.includes('Body')) html += `<div class="summary-row"><span>Body Tasarımı:</span><span>${body}</span></div>`;
+            html += `<div class="summary-row"><span>Adet:</span><span>${qty}</span></div>`;
+            
+            if (type === 'Takım (Tütü+Body+Taç)' || type === 'Sadece Body') {
+                let children = "";
+                document.querySelectorAll('.child-entry').forEach(entry => children += `${entry.querySelector('.c-name').value} (${entry.querySelector('.c-age').value}), `);
+                html += `<div class="summary-row"><span>Çocuklar:</span><span style="font-size:0.8em; text-align:right;">${children.slice(0, -2)}</span></div>`;
+            } else html += `<div class="summary-row"><span>Yaş Grubu:</span><span>${document.getElementById('ageGroup').value}</span></div>`;
+            summaryDiv.innerHTML = html;
+        }
+
+        async function submitOrder() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true; btn.textContent = "Kaydediliyor...";
+            const orderNo = 'SP-' + Math.floor(1000 + Math.random() * 9000);
+            const type = document.getElementById('productType').value;
+            
+            let childrenDetails = "";
+            if (type === 'Takım (Tütü+Body+Taç)' || type === 'Sadece Body') {
+                document.querySelectorAll('.child-entry').forEach(entry => childrenDetails += `${entry.querySelector('.c-name').value} (${entry.querySelector('.c-age').value}), `);
+            } else childrenDetails = "Genel - " + document.getElementById('ageGroup').value;
+
+            const orderData = {
+                orderNo: orderNo, customerName: document.getElementById('customerName').value, phone: document.getElementById('phone').value,
+                school: document.getElementById('school').value, address: document.getElementById('address').value,
+                productType: type, color: document.querySelector('input[name="color"]:checked')?.value || "",
+                crown: document.querySelector('input[name="crownModel"]:checked')?.value || "",
+                bodyDesign: document.querySelector('input[name="bodyDesign"]:checked')?.value || "",
+                quantity: document.getElementById('quantity').value, childrenList: childrenDetails
+            };
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(orderData) });
+                let msg = `*YENİ SİPARİŞ (${orderNo})*\n*Müşteri:* ${orderData.customerName}\n*Ürün:* ${orderData.productType}`;
+                if(orderData.color) msg += `\n*Renk:* ${orderData.color}`;
+                if(orderData.bodyDesign) msg += `\n*Body:* ${orderData.bodyDesign}`;
+                if(orderData.crown) msg += `\n*Taç:* ${orderData.crown}`;
+                msg += `\n*Detay:* ${childrenDetails}\n*Adres:* ${orderData.address}`;
+                document.getElementById('whatsappBtn').href = "https://wa.me/?text=" + encodeURIComponent(msg);
+                document.getElementById('orderNoText').textContent = "Sipariş No: " + orderNo;
+                goToStep(7);
+            } catch (e) { alert("Hata oluştu, WhatsApp ile devam ediniz."); goToStep(7); }
+        }
+
+        document.getElementById('productType').addEventListener('change', updateFieldsVisibility);
+    </script>
+</body>
+</html>
